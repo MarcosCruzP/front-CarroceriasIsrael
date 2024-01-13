@@ -1,0 +1,14 @@
+.tabledts th {
+    background-color: #09607033;
+    color: #096070;
+}
+
+
+.tabledts tr:hover {
+    background-color: #0960701f;
+    color: #096070;
+}
+
+.tabledts {
+    margin-bottom: 15px;
+}
