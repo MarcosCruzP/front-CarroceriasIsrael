@@ -48,6 +48,10 @@
             @click="dialog.warning = true; material.select = item; dialog.message= 'Estas por eliminar '+item.Descripcion "></v-btn>
         </template>
 
+        <template v-slot:[`item.updated_at`]="{ item }">
+            {{ item.updated_at.slice(0, 10) }}
+        </template>
+
     </v-data-table>
     </v-card>
 
@@ -65,13 +69,6 @@
                         <v-text-field  v-model="material.Descripcion " :rules="rules"  label="Material"></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6"  md="4">
-                    <!-- <select v-model="material.Unidad " :rules="rules" style="width:100%; height:100%; background:rgba(150, 150, 150, 0.192);">
-                        <option value="">sddad</option>
-                        <option value=""><v-card>
-                            <v-btn>Gestionar Catalogo</v-btn>                            
-                        </v-card></option>
-                    </select> -->
-
 
                     <v-select
                     clearable
@@ -80,20 +77,44 @@
                     item-title="Descripcion"
                     item-value="Codigo"
                     >
-                    <!-- <template v-slot:item="{ props, item }">
-                        <v-list-item
-                        v-bind="props"
-                         prepend-icon="mdi-config"
-                        title="nombre"
-                        :subtitle="item.raw.group"
+                    <template v-slot:item="{ props, item }">
+                        <v-list-item v-if="item.raw.Descripcion == 'Administrar Catalogos'"
+                        v-bind="props" @click="catalogos.dialog = true;"
+                         prepend-icon="mdi-cog"
+                        :subtitle="item.raw.Descripcion"
                         ></v-list-item>
-                    </template> -->
+                        <v-list-item v-else
+                        v-bind="props"
+                        :title="item.raw.Descripcion"
+                        ></v-list-item>
+                    </template>
 
                     </v-select>
                     
                     </v-col>
                     <v-col cols="12" sm="6"  md="4">
-                        <v-text-field  v-model="material.Family " :rules="rules"  label="Familia"></v-text-field>
+                        <!-- <v-text-field  v-model="material.Family " :rules="rules"  label="Familia"></v-text-field> -->
+                        <v-select
+                            clearable
+                            label="unidad"
+                            :items="catalogos.familias"
+                            item-title="Descripcion"
+                            item-value="Codigo"
+                            >
+                            <template v-slot:item="{ props, item }">
+                                <v-list-item v-if="item.raw.Descripcion == 'Administrar Catalogos'"
+                                v-bind="props"  @click="catalogos.dialog = true;"
+                                prepend-icon="mdi-cog"
+                                title=""
+                                :subtitle="item.raw.Descripcion"
+                                ></v-list-item>
+                                <v-list-item v-else
+                                v-bind="props"
+                                :title="item.raw.Descripcion"
+                                ></v-list-item>
+                            </template>
+
+                         </v-select>
                     </v-col>
                     <v-col cols="12" sm="6"  md="4">
                         <v-text-field  v-model="material.Costounitario "   label="Costo Unitario"></v-text-field>
@@ -137,11 +158,17 @@
             <v-window v-model="catalogos.tab">
                 <v-window-item value="Unidad" style="padding:15px; margin-right:10px;">
                     <v-row style="margin-bottom:10px"> 
-                        <v-spacer></v-spacer><v-btn prepend-icon="mdi-plus" color="cyan-darken-4" @click="catalogos.newc= true"  >Nuevo </v-btn>
+                        <v-spacer></v-spacer><v-btn prepend-icon="mdi-plus" color="cyan-darken-4" 
+                        @click="catalogos.newc= true, catalogos.Codigo = ''; catalogos.Descripcion=''; catalogos.action='new'"  >Nuevo </v-btn>
                     </v-row>
                 
                         <v-data-table  :headers="catalogos.headers" :loading="loadingTableDlg"
                         :items="catalogos.unidad"  density="compact"  class="tabledts"  >
+                        <template v-slot:[`item.Codigo`]="{ item }">
+                                <v-btn  density="compact"
+                                @click="catalogos.newc=true;catalogos.Codigo = item.Codigo; catalogos.action='update'
+                                catalogos.Descripcion=item.Descripcion; catalogos.id=item.id">{{ item.Codigo }}</v-btn>
+                            </template>
                             <template v-slot:[`item.delete`]="{ item }">
                                 <v-btn icon="mdi-delete" color="red"  density="compact"
                                 @click="console.log(item) "></v-btn>
@@ -150,10 +177,16 @@
                 </v-window-item>
                 <v-window-item value="Familias">
                     <v-row style="margin-bottom:10px; margin-top:10px; margin-right:10px;"> 
-                        <v-spacer></v-spacer><v-btn prepend-icon="mdi-plus" color="cyan-darken-4" @click="catalogos.newc= true" >Nuevo </v-btn>
+                        <v-spacer></v-spacer><v-btn prepend-icon="mdi-plus" color="cyan-darken-4" 
+                        @click="catalogos.newc= true,catalogos.Codigo = ''; catalogos.Descripcion=''; catalogos.action='new'" >Nuevo </v-btn>
                     </v-row>
                     <v-data-table  :headers="catalogos.headers" :loading="loadingTableDlg"
                         :items="catalogos.familias"  density="compact"  class="tabledts"  >
+                         <template v-slot:[`item.Codigo`]="{ item }">
+                                <v-btn  density="compact"
+                                @click="catalogos.newc=true;catalogos.Codigo = item.Codigo; catalogos.action='update'
+                                catalogos.Descripcion=item.Descripcion; catalogos.id=item.id">{{ item.Codigo }}</v-btn>
+                            </template>
                             <template v-slot:[`item.delete`]="{ item }">
                                 <v-btn icon="mdi-delete" color="red"  density="compact"
                                 @click="console.log(item) "></v-btn>
@@ -178,12 +211,13 @@
         transition="dialog-bottom-transition"
         width="50%" >
         <v-card>
-            <v-card-title>Nuevo catalogo {{ catalogos.tab }}</v-card-title>
+            <v-card-title v-if="catalogos.action=='new'">Nuevo catalogo {{ catalogos.tab }}</v-card-title>
+            <v-card-title v-else>Catalogo {{ catalogos.tab }}</v-card-title>
             <v-card-text>
                 <v-form @submit.prevent>
                 <v-row>
                     <v-col cols="12" sm="12"  md="4">
-                        <v-text-field  v-model="catalogos.Codigo " :rules="rules"  label="Codigo"></v-text-field>
+                        <v-text-field :disabled="catalogos.action=='new' ? false : true" v-model="catalogos.Codigo " :rules="rules"  label="Codigo"></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="12"  md="8">
                         <v-text-field  v-model="catalogos.Descripcion " :rules="rules"  label="Descripcion"></v-text-field>
@@ -289,8 +323,10 @@ export default {
                 unidad:[],
                 familias:[],
                 newc: false,
+                id: 0,
                 Codigo: '',
-                Descripcion: ''
+                Descripcion: '',
+                action:''
             },
             rules: [
                 value => {
@@ -321,6 +357,13 @@ export default {
                 this.catalogos.unidad = result.data.unidades
                 this.catalogos.familias = result.data.familys
                 this.loadingTableDlg = false
+                var setting = {
+                    id: 0,
+                    Codigo: "s",
+                    Descripcion: "Administrar Catalogos"
+                }
+                this.catalogos.unidad.push(setting)
+                this.catalogos.familias.push(setting)
             }) 
         },
         async deleteMaterial(){
@@ -337,19 +380,29 @@ export default {
         },
         async gurdarCatalogos(){
             this.loadingTableDlg = true
-            var urls =this.catalogos.tab == "Unidad" ? url+"/Unidades": url+"/Familia"
+            var urls =url
+
             let data = {
                 "Codigo": this.catalogos.Codigo,
                 "Descripcion" : this.catalogos.Descripcion
             }
-            await axios.post(urls, data)
-            .then((result) => {    
-                console.log(result.data)
-                this.catalogos.newc = false
-                this.getCalogos()
-                // this.loadingTableDlg = true
-            }) 
+            
+            if(this.catalogos.action == 'new'){
+                 urls =this.catalogos.tab == "Unidad" ? url+"/Unidades": url+"/Familia"
 
+                 await axios.post(urls, data)
+                .then((result) => {    
+                    console.log(result.data)
+                    this.catalogos.newc = false
+                    this.getCalogos()   }) 
+            }else{
+                 urls =this.catalogos.tab == "Unidad" ? url+"/Unidades/"+this.catalogos.id: url+"/Familia/"+this.catalogos.id
+                 await axios.put(urls, data)
+                .then((result) => {    
+                    console.log(result.data)
+                    this.catalogos.newc = false
+                    this.getCalogos()   }) 
+            }
         }
     }
 }

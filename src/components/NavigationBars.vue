@@ -1,5 +1,5 @@
 <template>
-    <v-toolbar dark prominent color="indigo-darken-4" density="compact">
+    <v-toolbar dark prominent color="black" density="compact">
         <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
         <v-avatar size="80px" >
             <v-img
